@@ -68,3 +68,12 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+# bom-tracking-app
+BOM Tracking Application A BOM tracking application for a gas company. Key features include:  
+- Upload BOMs by job 
+- Mark BOMs as received 
+- Input heat numbers for items 
+- Upload Material Test Reports (MTRs) for each heat number. 
+
+This application streamlines material tracking and ensures compliance with industry standards.
