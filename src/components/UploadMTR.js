@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const UploadMTR = ({ token, bomId }) => {
+const UploadMTR = ({ token, bomId, onUploadSuccess }) => {
   const [heatNumber, setHeatNumber] = useState('');
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
@@ -29,6 +29,9 @@ const UploadMTR = ({ token, bomId }) => {
         }
       });
       setMessage('MTR uploaded successfully.');
+      if (onUploadSuccess) {
+        onUploadSuccess();
+      }
     } catch (error) {
       setMessage(`Error uploading MTR: ${error.message}`);
       console.error('Error uploading MTR:', error);

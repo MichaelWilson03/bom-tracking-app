@@ -28,8 +28,6 @@ const BOMList = ({ token }) => {
       job: jobFilter
     };
 
-    console.log('Fetching BOM Data with params:', params); // Debug log
-
     axios.get('/api/bom', {
       headers: {
         Authorization: `Bearer ${token}`
@@ -37,13 +35,12 @@ const BOMList = ({ token }) => {
       params
     })
     .then(response => {
-      console.log('BOM data fetched:', response.data); // Debug log
       setBomData(response.data.data);
       setTotalItems(response.data.totalItems);
     })
     .catch(error => {
       console.error('Error fetching data:', error);
-      setBomData([]); // Ensure bomData is set to an empty array on error
+      setBomData([]);
     });
   };
 
@@ -135,9 +132,12 @@ const BOMList = ({ token }) => {
     setCurrentBomId(null);
   };
 
+  const handleDownloadMTR = (filePath) => {
+    window.open(filePath, '_blank');
+  };
+
   // Calculate total pages
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  console.log(`Total Pages: ${totalPages}, Current Page: ${currentPage}, Total Items: ${totalItems}`);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -166,6 +166,7 @@ const BOMList = ({ token }) => {
             <th>Description</th>
             <th>Job</th>
             <th>Received</th>
+            <th>Heat Numbers</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -210,6 +211,13 @@ const BOMList = ({ token }) => {
                 {item.received ? '✓' : 'Pending'}
               </td>
               <td>
+                {item.mtrs && item.mtrs.map(mtr => (
+                  <div key={mtr.id}>
+                    <a href="#" onClick={() => handleDownloadMTR(mtr.file_path)}>{mtr.heat_number}</a>
+                  </div>
+                ))}
+              </td>
+              <td>
                 {editingItem === item.id ? (
                   <>
                     <button onClick={handleSave}>Save</button>
@@ -252,4 +260,3 @@ const BOMList = ({ token }) => {
 };
 
 export default BOMList;
-

@@ -16,7 +16,7 @@ const pool = new Pool({
   port: 5432,
 });
 
-const saltRounds = 10; // Define the salt rounds here
+const saltRounds = 10;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -32,7 +32,7 @@ app.post('/api/register', async (req, res) => {
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, saltRounds); // Ensure salt rounds are passed
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     const client = await pool.connect();
     await client.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
     client.release();
@@ -187,8 +187,16 @@ app.get('/api/bom', authenticateToken, async (req, res) => {
       'SELECT COUNT(*) FROM bom WHERE description ILIKE $1 AND job ILIKE $2',
       [`%${search}%`, `%${job}%`]
     );
+
     const bomData = result.rows;
     const totalItems = parseInt(totalResult.rows[0].count, 10);
+
+    // Fetch MTR data for each BOM item
+    for (const bomItem of bomData) {
+      const mtrResult = await client.query('SELECT id, heat_number, file_path, file_name FROM mtrs WHERE bom_id = $1', [bomItem.id]);
+      bomItem.mtrs = mtrResult.rows;
+    }
+
     client.release();
     res.status(200).json({ data: bomData, totalItems });
   } catch (error) {
@@ -348,8 +356,8 @@ app.post('/api/mtrs', authenticateToken, upload.single('file'), async (req, res)
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'INSERT INTO mtrs (bom_id, heat_number, mtr_file) VALUES ($1, $2, $3) RETURNING *',
-      [bom_id, heat_number, file.path]
+      'INSERT INTO mtrs (bom_id, heat_number, file_path, file_name) VALUES ($1, $2, $3, $4) RETURNING *',
+      [bom_id, heat_number, file.path, file.originalname]
     );
     client.release();
     res.status(201).json(result.rows[0]);
@@ -374,36 +382,7 @@ app.get('/api/bom/:id/mtrs', authenticateToken, async (req, res) => {
   }
 });
 
-// Upload MTR endpoint with authentication
-app.post('/api/upload-mtr', authenticateToken, upload.single('file'), async (req, res) => {
-  const file = req.file;
-  const { bomId, heatNumber } = req.body;
-
-  if (!file) {
-    return res.status(400).send('No file uploaded.');
-  }
-
-  const filePath = file.path;
-  const fileName = file.originalname;
-
-  try {
-    const client = await pool.connect();
-    await client.query('BEGIN');
-    const result = await client.query(
-      'INSERT INTO mtrs (bom_id, heat_number, file_path, file_name) VALUES ($1, $2, $3, $4) RETURNING *',
-      [bomId, heatNumber, filePath, fileName]
-    );
-    await client.query('COMMIT');
-    client.release();
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error adding MTR:', error); // Log the detailed error
-    res.status(500).send('Error adding MTR.');
-  }
-});
-
-
-
+// Start the server
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 });
